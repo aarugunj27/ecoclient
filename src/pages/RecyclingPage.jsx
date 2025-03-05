@@ -17,7 +17,8 @@ import {
   Coffee,
 } from "lucide-react";
 
-const Model = import.meta.env.VITE_Model_URL;
+const Model = import.meta.env.VITE_MODEL_URL;
+const Auth = import.meta.env.VITE_FRONTEND_URL;
 
 export default function RecyclingPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -133,7 +134,7 @@ export default function RecyclingPage() {
         method: "POST",
         body: formData,
         headers: {
-          "Access-Control-Allow-Origin": "https://ecoclient.netlify.app",
+          "Access-Control-Allow-Origin": `${Auth}/recycling`,
         },
       });
 
