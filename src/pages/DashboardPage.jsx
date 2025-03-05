@@ -27,6 +27,8 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast"; // Make sure to install react-hot-toast if not already installed
 
+const Api = import.meta.env.VITE_API_URL;
+
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [user, setUser] = useState(null);
@@ -105,14 +107,11 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(
-        "http://localhost:5000/api/get-eco-scores",
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      const response = await axios.get(`${API}/get-eco-scores`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       setEcoScores(response.data.ecoScores || []);
       setLoading(false);
     } catch (error) {

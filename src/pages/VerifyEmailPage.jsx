@@ -6,7 +6,7 @@ import { Footer } from "../components/footer";
 import { Button } from "../components/ui/button";
 import { CheckCircle, XCircle, Loader } from "lucide-react";
 
-const Auth = import.meta.env.VITE_Auth_URL;
+const Auth = import.meta.env.VITE_AUTH_URL;
 
 export default function VerifyEmailPage() {
   const { verificationToken } = useParams();
