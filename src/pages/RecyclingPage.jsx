@@ -133,7 +133,7 @@ export default function RecyclingPage() {
         method: "POST",
         body: formData,
         headers: {
-          "Access-Control-Allow-Origin": "https://ecoclient.netlify.app/recycling",
+          "Access-Control-Allow-Origin": "https://ecoclient.netlify.app",
         },
       });
 
