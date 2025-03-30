@@ -1,8 +1,10 @@
 /** @type {import('tailwindcss').Config} */
-const plugin = require("tailwindcss/plugin");
+import plugin from "tailwindcss/plugin";
+import animatePlugin from "tailwindcss-animate";
+
 export default {
   darkMode: ["class"],
-  content: ["./index.html", "./src/**/*.{js,jsx}", "*.{js,ts,jsx,tsx,mdx}"],
+  content: ["./index.html", "./src/**/*.{js,jsx}", "./*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     container: {
       center: true,
@@ -64,5 +66,10 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    animatePlugin,
+    plugin(function ({ addUtilities }) {
+      // Add any custom plugin utilities here
+    }),
+  ],
 };
