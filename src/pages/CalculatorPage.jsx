@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import axios from "axios";
 
+const API = import.meta.env.VITE_API_URL;
+
 export default function CalculatorPage() {
   const [activeSection, setActiveSection] = useState("transportation");
   const [showResults, setShowResults] = useState(false);
@@ -318,7 +320,7 @@ export default function CalculatorPage() {
       }
 
       const response = await axios.post(
-        "http://localhost:5000/api/save-eco-score",
+        `${API}/save-eco-score`,
         {
           score: results.totalFootprint,
           breakdown: {

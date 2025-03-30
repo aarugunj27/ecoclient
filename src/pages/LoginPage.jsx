@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -7,6 +5,8 @@ import { Navbar } from "../components/navbar";
 import { Footer } from "../components/footer";
 import { Button } from "../components/ui/button";
 import { Leaf } from "lucide-react";
+
+const Auth = import.meta.env.VITE_AUTH_URL;
 
 export default function LoginPage() {
   const [values, setValues] = useState({
@@ -48,7 +48,7 @@ export default function LoginPage() {
     if (validate()) {
       setLoading(true);
       axios
-        .post("http://localhost:5000/auth/login", values)
+        .post(`${Auth}/login`, values)
         .then((res) => {
           setLoading(false);
           if (res.data.message === "Success") {

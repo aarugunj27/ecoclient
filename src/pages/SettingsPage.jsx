@@ -19,6 +19,8 @@ import {
   X,
 } from "lucide-react";
 
+const Auth = import.meta.env.VITE_AUTH_URL;
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("account");
   const [user, setUser] = useState(null);
@@ -260,7 +262,7 @@ export default function SettingsPage() {
     if (validateDeleteForm()) {
       setLoading(true);
       axios
-        .post("http://localhost:5000/auth/delete-account", deleteFormValues)
+        .post(`${Auth}/delete-account`, deleteFormValues)
         .then((res) => {
           setLoading(false);
           if (res.status === 200) {

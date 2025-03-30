@@ -6,6 +6,8 @@ import { Footer } from "../components/footer";
 import { Button } from "../components/ui/button";
 import { Leaf, CheckCircle } from "lucide-react";
 
+const Auth = import.meta.env.VITE_AUTH_URL;
+
 export default function SignupPage() {
   const [values, setValues] = useState({
     name: "",
@@ -64,7 +66,7 @@ export default function SignupPage() {
     if (validate()) {
       setLoading(true);
       axios
-        .post("http://localhost:5000/auth/signup", values)
+        .post(`${Auth}/signup`, values)
         .then((res) => {
           setLoading(false);
           if (res.data.message === "User created, verification email sent") {
