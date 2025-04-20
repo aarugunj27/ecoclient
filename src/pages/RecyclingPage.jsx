@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import * as ort from "onnxruntime-web";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -17,9 +18,6 @@ import {
   Coffee,
 } from "lucide-react";
 
-const Model = import.meta.env.VITE_MODEL_URL;
-const Auth = import.meta.env.VITE_FRONTEND_URL;
-
 export default function RecyclingPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResult, setSearchResult] = useState(null);
@@ -31,11 +29,35 @@ export default function RecyclingPage() {
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Added for ONNX model inference
+  const [session, setSession] = useState(null);
+  const imgRef = useRef(null);
+
+  useEffect(() => {
+    if (prediction) {
+      const resultsSection = document.getElementById("results-section");
+      if (resultsSection) {
+        resultsSection.classList.remove("hidden");
+      }
+    }
+  }, [prediction]);
+
+  // Load the ONNX model on component mount
+  useEffect(() => {
+    const loadModel = async () => {
+      try {
+        const sess = await ort.InferenceSession.create("/models/model.onnx");
+        setSession(sess);
+        console.log("ONNX model loaded successfully.");
+      } catch (err) {
+        console.error("Failed to load ONNX model:", err);
+      }
+    };
+    loadModel();
+  }, []);
+
   const handleSearch = async (e) => {
     e.preventDefault();
-
-    // In a real app, this would call an API to get recycling information
-    // For now, we'll just set a placeholder result
     setSearchResult({
       recyclable: false,
       instructions:
@@ -47,15 +69,22 @@ export default function RecyclingPage() {
     const file = e.target.files[0];
     if (file) {
       setSelectedImage(file);
-
-      // Create image preview
+      // Create image preview using FileReader
       const reader = new FileReader();
       reader.onload = (event) => {
         setImagePreview(event.target.result);
+
+        // Create an image element for the model
+        const img = new Image();
+        img.onload = () => {
+          if (imgRef.current) {
+            imgRef.current.src = event.target.result;
+          }
+        };
+        img.src = event.target.result;
       };
       reader.readAsDataURL(file);
-
-      // Reset any previous prediction
+      // Clear any previous prediction
       setPrediction(null);
     }
   };
@@ -64,8 +93,11 @@ export default function RecyclingPage() {
     setSelectedImage(null);
     setImagePreview(null);
     setPrediction(null);
-    // Reset the file input
-    document.getElementById("image-upload").value = "";
+    // Reset the file input value
+    const fileInput = document.getElementById("image-upload");
+    if (fileInput) {
+      fileInput.value = "";
+    }
   };
 
   const isRecyclable = (className) => {
@@ -118,40 +150,104 @@ export default function RecyclingPage() {
     );
   };
 
+  // Updated preprocessing function
+  const preprocessImage = (imgElement) => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = 224;
+    canvas.height = 224;
+
+    ctx.drawImage(imgElement, 0, 0, 224, 224);
+    const { data } = ctx.getImageData(0, 0, 224, 224);
+
+    const mean = [0.485, 0.456, 0.406];
+    const std = [0.229, 0.224, 0.225];
+
+    const float32Data = new Float32Array(3 * 224 * 224);
+
+    for (let i = 0; i < 224 * 224; i++) {
+      const r = data[i * 4] / 255;
+      const g = data[i * 4 + 1] / 255;
+      const b = data[i * 4 + 2] / 255;
+
+      float32Data[i] = (r - mean[0]) / std[0]; // Red channel
+      float32Data[i + 224 * 224] = (g - mean[1]) / std[1]; // Green channel
+      float32Data[i + 2 * 224 * 224] = (b - mean[2]) / std[2]; // Blue channel
+    }
+
+    return float32Data;
+  };
+
+  // Inference function which uses the loaded session
+  const runInferenceOnImage = async (imgElement) => {
+    if (!session) {
+      console.error("Model session not loaded yet.");
+      return;
+    }
+    const float32Data = preprocessImage(imgElement);
+    const inputTensor = new ort.Tensor(
+      "float32",
+      float32Data,
+      [1, 3, 224, 224]
+    );
+    const feeds = { input: inputTensor };
+    try {
+      const results = await session.run(feeds);
+      const outputTensor = results.output;
+      const outputData = outputTensor.data;
+      const predictedIndex = outputData.indexOf(Math.max(...outputData));
+      const classNames = [
+        "cardboard",
+        "glass",
+        "metal",
+        "paper",
+        "plastic",
+        "trash",
+      ];
+
+      // Calculate confidence as a percentage
+      const maxValue = Math.max(...outputData);
+      const confidence = Math.round(maxValue * 100);
+
+      // Wrap the prediction in an object to integrate with your recycling UI
+      setPrediction({
+        predicted_class: classNames[predictedIndex],
+        predicted_prob: confidence,
+      });
+    } catch (err) {
+      console.error("Error during inference:", err);
+      alert("Error during inference. Please check the console for details.");
+    }
+  };
+
+  // Updated handleAnalyzeImage to use the ONNX inference
   const handleAnalyzeImage = async () => {
     if (!selectedImage) {
       alert("Please select an image first.");
       return;
     }
+    if (!session) {
+      alert("Model not loaded yet. Please try again later.");
+      return;
+    }
 
     setLoading(true);
-
     try {
-      const formData = new FormData();
-      formData.append("file", selectedImage);
-
-      const response = await fetch(`${Model}`, {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Access-Control-Allow-Origin": `${Auth}/recycling`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
+      if (!imgRef.current) {
+        alert("Image preview not available.");
+        return;
       }
-
-      setPrediction(data);
+      await runInferenceOnImage(imgRef.current);
 
       // Show the results section
-      document.getElementById("results-section").classList.remove("hidden");
+      const resultsSection = document.getElementById("results-section");
+      if (resultsSection) {
+        resultsSection.classList.remove("hidden");
+      }
 
-      console.log("Prediction result:", data);
+      console.log("Inference complete.");
     } catch (error) {
-      console.error("Error during image analysis:", error);
+      console.error("Error during model inference:", error);
       alert("An error occurred while analyzing the image. Please try again.");
     } finally {
       setLoading(false);
@@ -278,9 +374,11 @@ export default function RecyclingPage() {
                       </div>
                     ) : (
                       <img
+                        ref={imgRef}
                         src={imagePreview || "/placeholder.svg"}
                         alt="Preview"
                         className="max-h-64 max-w-full mx-auto rounded-lg"
+                        crossOrigin="anonymous"
                       />
                     )}
                   </label>
@@ -386,13 +484,6 @@ export default function RecyclingPage() {
                           </span>
                         </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Confidence:{" "}
-                        {prediction.predicted_prob !== undefined
-                          ? prediction.predicted_prob.toFixed(2)
-                          : 0}
-                        %
-                      </p>
                       <div className="mt-4 p-3 bg-muted/50 rounded-md">
                         <h4 className="font-medium mb-1">
                           Recycling Instructions:
