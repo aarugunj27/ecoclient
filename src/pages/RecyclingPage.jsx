@@ -257,48 +257,50 @@ export default function RecyclingPage() {
   return (
     <>
       <Navbar />
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-4">Recycling Information</h1>
+      <main className="flex-grow container mx-auto px-4 py-6 max-w-full">
+        <h1 className="text-3xl font-bold mb-4 text-center">
+          Recycling Information
+        </h1>
 
-        <div className="mb-4">
+        <div className="mb-4 flex flex-wrap justify-center gap-2">
           <Button
             onClick={() => setActiveTab("search")}
             variant={activeTab === "search" ? "default" : "outline"}
-            className="mr-2"
+            className="px-4 py-2"
           >
-            Search
+            <Search className="h-5 w-5 mr-1" /> Search
           </Button>
           <Button
             onClick={() => setActiveTab("location")}
             variant={activeTab === "location" ? "default" : "outline"}
-            className="mr-2"
+            className="px-4 py-2"
           >
             Find Recycling Location
           </Button>
           <Button
             onClick={() => setActiveTab("camera")}
             variant={activeTab === "camera" ? "default" : "outline"}
+            className="px-4 py-2"
           >
-            Camera Search
+            <Camera className="h-5 w-5 mr-1" /> Camera Search
           </Button>
         </div>
 
         {activeTab === "search" && (
           <div className="mb-4">
-            <form onSubmit={handleSearch} className="flex">
+            <form onSubmit={handleSearch} className="flex flex-col gap-2">
               <input
                 type="text"
                 placeholder="Enter item to recycle"
-                className="flex-grow rounded-l-md border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <Button type="submit" className="rounded-r-md">
+              <Button type="submit" className="w-full">
                 <Search className="h-5 w-5 mr-2" />
                 Search
               </Button>
             </form>
-
             {searchResult && (
               <div className="mt-4 p-4 border rounded-md">
                 <h2 className="text-xl font-semibold">
@@ -322,7 +324,7 @@ export default function RecyclingPage() {
         )}
 
         {activeTab === "location" && (
-          <div>
+          <div className="text-center">
             <h2 className="text-xl font-semibold mb-4">
               Find Recycling Locations
             </h2>
@@ -332,10 +334,12 @@ export default function RecyclingPage() {
 
         {activeTab === "camera" && (
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold mb-4">Camera Search</h2>
-            <p className="text-muted-foreground mb-6">
+            <h2 className="text-xl font-semibold mb-4 text-center">
+              Camera Search
+            </h2>
+            <p className="text-center text-muted-foreground mb-6">
               Take a photo or upload an image of an item to check if it's
-              recyclable
+              recyclable.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -389,6 +393,7 @@ export default function RecyclingPage() {
                     variant="outline"
                     onClick={handleClearImage}
                     disabled={!selectedImage || loading}
+                    className="w-1/2"
                   >
                     Clear
                   </Button>
@@ -396,12 +401,13 @@ export default function RecyclingPage() {
                     variant="primary"
                     onClick={handleAnalyzeImage}
                     disabled={!selectedImage || loading}
+                    className="w-1/2"
                   >
                     {loading ? (
-                      <>
+                      <div className="flex items-center justify-center">
                         <Loader className="h-4 w-4 mr-2 animate-spin" />
                         Analyzing...
-                      </>
+                      </div>
                     ) : (
                       "Analyze Image"
                     )}
@@ -445,7 +451,9 @@ export default function RecyclingPage() {
               className="mt-8 pt-6 border-t border-border hidden"
               id="results-section"
             >
-              <h3 className="text-lg font-medium mb-4">Analysis Results</h3>
+              <h3 className="text-lg font-medium mb-4 text-center">
+                Analysis Results
+              </h3>
 
               {prediction && (
                 <div
